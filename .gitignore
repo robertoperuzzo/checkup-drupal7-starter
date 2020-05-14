@@ -1,0 +1,8 @@
+# Docker.
+docker/.env
+docker/docker-compose.override.yml
+docker/mariadb-init/*
+
+# Database dumps.
+*.sql
+*.sql.gz
