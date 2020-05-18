@@ -82,14 +82,35 @@ class RoboFile extends \Robo\Tasks {
 
     // Throws exception if dir site folder not exists.
     if (!file_exists($base)) {
-      new TaskException($this, 'You have to copy Drupal codebase in /web folder.');
+      $this->say('ERROR: no websito found! You have to copy Drupal codebase in /web folder.');
+      return NULL;
     }
 
-    $source = $scaffold . DIRECTORY_SEPARATOR . 'tpl.settings.local.php';
-    $destination = $base . DIRECTORY_SEPARATOR . 'settings.local.php';
+    $settingsLocalSource = $scaffold . DIRECTORY_SEPARATOR . 'tpl.settings.local.php';
+    $settingsOriginCopy = $scaffold . DIRECTORY_SEPARATOR . 'origin.settings.php';
+    $settingsLocaldestination = $base . DIRECTORY_SEPARATOR . 'settings.local.php';
+    $settingsFilePath = $base . DIRECTORY_SEPARATOR . 'settings.php';
+    $settingsSourceAppend = $scaffold . DIRECTORY_SEPARATOR . 'tpl.settings.php';
+
+    if (!file_exists($settingsOriginCopy)) {
+      $this->taskFilesystemStack()
+        ->copy($settingsFilePath, $settingsOriginCopy)
+        ->run();
+    }
+
     $this->getBuilder()->addTaskList([
-      'add-settings-local' => $this->taskFilesystemStack()
-        ->copy($source, $destination)
+      'add-settings-local-php' => $this->taskFilesystemStack()
+        ->copy($settingsLocalSource, $settingsLocaldestination),
+      'set-permission-default' =>  $this->taskFilesystemStack()
+        ->chmod($base, 0755),
+      'write-permission-settings-php' =>  $this->taskFilesystemStack()
+        ->chmod($settingsFilePath, 0644),
+      'append-settings-php' => $this->taskConcat([
+        $settingsOriginCopy,
+        $settingsSourceAppend,
+      ])->to($settingsFilePath),
+      'read-permission-settings-php' =>  $this->taskFilesystemStack()
+        ->chmod($settingsFilePath, 0444),
     ]);
 
     return $this->getBuilder();
