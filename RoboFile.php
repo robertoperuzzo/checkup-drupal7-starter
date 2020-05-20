@@ -1,5 +1,7 @@
 <?php
 
+define('OUTPUT_REDIRECTION', '>');
+
 use Drupal\Component\Utility\Crypt;
 use Drupal\Core\Site\Settings;
 use Robo\Exception\TaskException;
@@ -16,6 +18,8 @@ class RoboFile extends \Robo\Tasks {
   const PROJECT_FOLDER = __DIR__;
   const DRUPAL_ROOT_FOLDER = self::PROJECT_FOLDER . '/web';
   const DATABASE_DUMP_FOLDER = self::PROJECT_FOLDER . '/backups';
+  const CHECKUP_FOLDER = self::PROJECT_FOLDER . '/checkup';
+  const REPORT_FILE_SECURITY = self::CHECKUP_FOLDER . '/security.out';
 
   /**
    * Site.
@@ -23,6 +27,92 @@ class RoboFile extends \Robo\Tasks {
    * @var string
    */
   protected $site = 'default';
+
+  /**
+   * Checup modules.
+   *
+   * @var array
+   */
+  protected $checkupModules = [
+    'hacked',
+    'security_review',
+  ];
+
+  /**
+   * Run modules checkup.
+   *
+   * @command checkup:modules
+   *
+   * @return \Robo\Collection\CollectionBuilder
+   */
+  public function checkupModules() {
+    $task_list = [
+      // 'download-modules' => NULL,
+      // 'run-checkup' => NULL,
+      // 'cacheClear' => $this->initDrush()->clearCache(),
+      'securityUpdates' => $this->initDrush()
+        ->option('security-only')
+        ->drush('ups'),
+      'listEnabledModules'  => $this->initDrush()
+        ->option('status=enabled')
+        ->drush('pml'),
+      'listDisabledModules'  => $this->initDrush()
+        ->option('status="disabled,not installed"')
+        ->drush('pml'),
+      'enableModules' => $this->initDrush()
+        ->drush(),
+    ];
+    $this->getBuilder()->addTaskList($task_list);
+    return $this->getBuilder();
+  }
+
+  /**
+   * Run security checkup.
+   *
+   * @command checkup:security
+   *
+   * @return \Robo\Collection\CollectionBuilder
+   */
+  public function checkupSecurity() {
+    $task_list = [
+      'cacheClear' => $this->initDrush()->clearCache(),
+      'downloadModules' => $this->initDrush()
+        ->arg('hacked')
+        ->arg('security_review')
+        ->drush('dl'),
+      'enableModules' => $this->initDrush()
+        ->arg('hacked')
+        ->arg('security_review')
+        ->drush('en'),
+      'hacked'  => $this->initDrush()
+        ->option('force-rebuild')
+        ->drush('hlp'),
+      'securityReview'  => $this->initDrush()
+        ->option('full')
+        ->option('store')
+        ->drush('secrev'),
+    ];
+    $this->getBuilder()->addTaskList($task_list);
+    return $this->getBuilder();
+  }
+
+  /**
+   * Uninstall checkup's modules.
+   *
+   * @command checkup:uninstall
+   *
+   * @return \Robo\Collection\CollectionBuilder
+   */
+  public function checkupUninstall() {
+    $task_list = [
+      'disableModules' => NULL,
+      'uninstallModules' => NULL,
+      'deleteModules' => NULL,
+      'cacheRebuild' => $this->initDrush()->drush('cache:rebuild'),
+    ];
+    $this->getBuilder()->addTaskList($task_list);
+    return $this->getBuilder();
+  }
 
   /**
    * Setup from database.
@@ -36,12 +126,11 @@ class RoboFile extends \Robo\Tasks {
   public function installDatabase($dump_file) {
     $task_list = [
       'sqlDrop' => $this->initDrush()
-        ->drush('sql:drop')
-        ->option("--yes"),
+        ->drush('sql:drop'),
       'sqlCli' => $this->initDrush()
-        ->drush('sql:cli < ')
-        ->arg($dump_file),
-      'cacheRebuild' => $this->initDrush()->drush('cache:rebuild'),
+        ->arg("< $dump_file")
+        ->drush('sql:cli'),
+      'cacheClear' => $this->initDrush()->clearCache(),
     ];
     $this->getBuilder()->addTaskList($task_list);
     return $this->getBuilder();
@@ -82,7 +171,7 @@ class RoboFile extends \Robo\Tasks {
 
     // Throws exception if dir site folder not exists.
     if (!file_exists($base)) {
-      $this->say('ERROR: no websito found! You have to copy Drupal codebase in /web folder.');
+      $this->io()->warning('No website found! You have to copy Drupal codebase in /web folder.');
       return NULL;
     }
 
@@ -123,7 +212,7 @@ class RoboFile extends \Robo\Tasks {
    * @return \Boedah\Robo\Task\Drush\DrushStack
    */
   protected function initDrush($site = 'default') {
-    return $this->taskDrushStack(self::PROJECT_FOLDER . '/vendor/bin/drush')
+    return $this->taskDrushStack('/usr/local/bin/drush')
       ->drupalRootDirectory(self::DRUPAL_ROOT_FOLDER)
       ->uri($site);
   }
