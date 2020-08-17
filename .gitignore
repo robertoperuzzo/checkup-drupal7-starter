@@ -1,5 +1,5 @@
-# Drupal.
-web/sites/default/settings.local.php
+# Drupal website.
+web
 
 # Docker.
 docker/.env
@@ -9,3 +9,9 @@ docker/mariadb-init/*
 # Database dumps.
 *.sql
 *.sql.gz
+
+# JetBrain
+.idea
+
+# Composer packages
+vendor
