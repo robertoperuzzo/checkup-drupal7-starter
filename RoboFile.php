@@ -55,12 +55,15 @@ class RoboFile extends \Robo\Tasks {
         ->drush('ups'),
       'listEnabledModules'  => $this->initDrush()
         ->option('status=enabled')
+        ->option('--no-core')
+        ->drush('pml'),
+      'listEnabledCoreModules'  => $this->initDrush()
+        ->option('status=enabled')
+        ->option('--core')
         ->drush('pml'),
       'listDisabledModules'  => $this->initDrush()
         ->option('status="disabled,not installed"')
         ->drush('pml'),
-      'enableModules' => $this->initDrush()
-        ->drush(),
     ];
     $this->getBuilder()->addTaskList($task_list);
     return $this->getBuilder();
