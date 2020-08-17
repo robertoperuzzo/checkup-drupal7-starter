@@ -188,10 +188,10 @@ class RoboFile extends \Robo\Tasks {
     }
 
     $this->getBuilder()->addTaskList([
-      'add-settings-local-php' => $this->taskFilesystemStack()
-        ->copy($settingsLocalSource, $settingsLocaldestination),
       'set-permission-default' =>  $this->taskFilesystemStack()
         ->chmod($base, 0755),
+      'add-settings-local-php' => $this->taskFilesystemStack()
+        ->copy($settingsLocalSource, $settingsLocaldestination),
       'write-permission-settings-php' =>  $this->taskFilesystemStack()
         ->chmod($settingsFilePath, 0644),
       'append-settings-php' => $this->taskConcat([

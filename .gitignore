@@ -15,3 +15,6 @@ docker/mariadb-init/*
 
 # Composer packages
 vendor
+
+# Original setting.php copy
+scaffold/origin.settings.php
