@@ -87,6 +87,7 @@ class RoboFile extends \Robo\Tasks {
         ->arg('hacked')
         ->arg('security_review')
         ->drush('en'),
+      'cacheClear' => $this->initDrush()->clearCache(),
       'hacked'  => $this->initDrush()
         ->option('force-rebuild')
         ->drush('hlp'),
@@ -108,10 +109,16 @@ class RoboFile extends \Robo\Tasks {
    */
   public function checkupUninstall() {
     $task_list = [
-      'disableModules' => NULL,
-      'uninstallModules' => NULL,
-      'deleteModules' => NULL,
-      'cacheRebuild' => $this->initDrush()->drush('cache:rebuild'),
+      'disableModules' =>  $this->initDrush()
+        ->arg('hacked')
+        ->arg('security_review')
+        ->drush('dis'),
+      'uninstallModules' =>  $this->initDrush()
+        ->arg('hacked')
+        ->arg('security_review')
+        ->drush('pmu'),
+      // 'deleteModules' => NULL,
+      'cacheClear' => $this->initDrush()->clearCache(),
     ];
     $this->getBuilder()->addTaskList($task_list);
     return $this->getBuilder();

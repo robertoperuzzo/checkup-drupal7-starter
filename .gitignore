@@ -1,5 +1,6 @@
-# Drupal website.
+# Drupal
 web
+private
 
 # Docker.
 docker/.env
