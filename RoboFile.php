@@ -127,13 +127,13 @@ class RoboFile extends \Robo\Tasks {
   /**
    * Setup from database.
    *
-   * @command install:database
+   * @command database:install
    *
    * @param string $dump_file
    *
    * @return \Robo\Collection\CollectionBuilder
    */
-  public function installDatabase($dump_file) {
+  public function databaseInstall($dump_file) {
     $task_list = [
       'sqlDrop' => $this->initDrush()
         ->drush('sql:drop'),
@@ -141,6 +141,36 @@ class RoboFile extends \Robo\Tasks {
         ->arg("< $dump_file")
         ->drush('sql:cli'),
       'cacheClear' => $this->initDrush()->clearCache(),
+    ];
+    $this->getBuilder()->addTaskList($task_list);
+    return $this->getBuilder();
+  }
+
+  /**
+   * Dump current database.
+   *
+   * @command database:dump
+   *
+   * @return \Robo\Collection\CollectionBuilder
+   * @throws TaskException
+   */
+  public function databaseDump() {
+
+    $date = date('Ymd_Hs');
+    $filename = self::DATABASE_DUMP_FOLDER . '/drupal_' . $date . '.sql';
+
+    if (!file_exists(self::DATABASE_DUMP_FOLDER)) {
+      $this->taskExecStack()
+        ->exec('mkdir ' . self::DATABASE_DUMP_FOLDER)
+        ->run();
+    }
+
+    $task_list = [
+      'cacheClear' => $this->initDrush()->clearCache(),
+      'sqlDump' => $this->initDrush()
+        ->arg("--result-file=$filename")
+        ->option('gzip')
+        ->drush('sql:dump'),
     ];
     $this->getBuilder()->addTaskList($task_list);
     return $this->getBuilder();

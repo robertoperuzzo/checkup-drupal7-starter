@@ -10,12 +10,14 @@ docker/mariadb-init/*
 # Database dumps.
 *.sql
 *.sql.gz
+backups
 
 # JetBrain
 .idea
 
 # Composer packages
 vendor
+composer.lock
 
 # Original setting.php copy
 scaffold/origin.settings.php
